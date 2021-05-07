@@ -7,4 +7,3 @@ sql = 'select * from students'
 res = Sqlite3Action.execute(db_name='test', sql=sql)
 Sqlite3Action.close(db_name='test')
 print(res)
-
