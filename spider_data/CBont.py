@@ -1,9 +1,12 @@
 import pandas as pd
-
+import json
+import requests
+import time
 
 class ConvertibleBond:
     """
-    接口返回的数据
+    集思录可转债接口返回的数据 （包括可交换债）
+    https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t=1606138878882
     """
     class Bond:
         """
@@ -289,22 +292,37 @@ class ConvertibleBond:
         else:
             return True
 
-    def __init__(self, mydict):
-        self.page = mydict['page']
-        self.total = mydict['total']
+    def update(self):
+        timestamp = int(time.time() * 1000)
+        jsl_address = 'https://www.jisilu.cn/data/cf/cf_list/?___jsl=LST___t={0}'.format(timestamp)
+
+        response = requests.get(jsl_address)
+        all_content = json.loads(response.text)
+        self.page = all_content['page']
+        self.total = all_content['total']
         self.bonds = []
-        cbs, active_cbs = [],[]
-        for r in mydict['rows']:
+        cbs, active_cbs = [], []
+        for r in all_content['rows']:
             info = r['cell']
             bond = self.Bond(info)
             self.bonds.append(bond)
             cbs.append(info)
             if self.__detect_active(info):
                 active_cbs.append(info)
-        self._dict = mydict
+        self._dict = all_content
         # 默认df 为活跃，all_df 包含未上市
         self.df = pd.DataFrame(active_cbs)
         self.all_df = pd.DataFrame(cbs)
+
+    def __init__(self):
+        self.page = None
+        self.total = None
+        self.bonds = None
+        self._dict = None
+        self.df = None
+        self.all_df = None
+        # 获取最新数据
+        self.update()
 
     def get_cb(self, cb_type='C'):
         """
