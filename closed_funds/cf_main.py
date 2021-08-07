@@ -8,7 +8,7 @@ df = cf.get_cf()
 df['week1_nav_incr_rt'] = df['week1_nav_incr_rt'].str.strip('%').astype('float')
 df['month1_nav_incr_rt'] = df['month1_nav_incr_rt'].str.strip('%').astype('float')
 # 权重比例 weight 周和月比例设置 1：4
-weight = 4
+weight = 1
 # 目前综合得分按照  week+month/4 计算
 df['score'] = df['week1_nav_incr_rt'] + df['month1_nav_incr_rt']/weight
 df['score'] = df['score'].apply(lambda x: round(x,2))

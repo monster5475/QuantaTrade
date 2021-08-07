@@ -292,11 +292,37 @@ class ConvertibleBond:
         else:
             return True
 
-    def update(self):
-        timestamp = int(time.time() * 1000)
-        jsl_address = 'https://www.jisilu.cn/data/cf/cf_list/?___jsl=LST___t={0}'.format(timestamp)
+    def __login(self):
+        # 登录参数 涉及隐私 建议仓库改为私人仓
+        params = {
+            'return_url': 'https://www.jisilu.cn/',
+            'user_name': '8550870a09c06319d9a0a5c677555a27',
+            'password': '832ea9e7735118ea29b42c80b37a1146',
+            'net_auto_login': '1',
+            '_post_type': 'ajax',
+            'aes': 1
+        }
+        address = 'https://www.jisilu.cn/account/ajax/login_process/'
+        resp = requests.post(address, params)
+        login_cookie = resp.headers['Set-Cookie']
+        kbzw__Session = login_cookie[login_cookie.find('kbzw__Session=') + len('kbzw__Session=')
+                                     :login_cookie.find(';', login_cookie.find('kbzw__Session='))]
+        kbzw__user_login = login_cookie[login_cookie.rfind('kbzw__user_login=') + len('kbzw__user_login=')
+                                     :login_cookie.find(';', login_cookie.rfind('kbzw__user_login='))]
+        kbzw_r_uname = login_cookie[login_cookie.rfind('kbzw_r_uname=') + len('kbzw_r_uname=')
+                                        :login_cookie.find(';', login_cookie.rfind('kbzw_r_uname='))]
+        return {'kbzw__Session': kbzw__Session, 'kbzw__user_login': kbzw__user_login, 'kbzw_r_uname':kbzw_r_uname}
 
-        response = requests.get(jsl_address)
+    def get_cookie(self):
+        if self._cookie is None:
+            self._cookie = self.__login()
+        return self._cookie
+
+    def update(self):
+        cookie = self.get_cookie()
+        timestamp = int(time.time() * 1000)
+        jsl_address = 'https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t={0}'.format(timestamp)
+        response = requests.post(jsl_address, cookies=cookie)
         all_content = json.loads(response.text)
         self.page = all_content['page']
         self.total = all_content['total']
@@ -321,6 +347,7 @@ class ConvertibleBond:
         self._dict = None
         self.df = None
         self.all_df = None
+        self._cookie = None
         # 获取最新数据
         self.update()
 
